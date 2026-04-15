@@ -6,8 +6,6 @@ import {
   INDUSTRIES, DATA_TYPES, GEOGRAPHIES,
 } from "../data/mockData";
 
-const IS_DEV = import.meta.env.DEV;
-
 const LOADING_STEPS = [
   "Submitting intake…",
   "Running gap assessment…",
@@ -29,7 +27,7 @@ function LoadingOverlay({ step }) {
       <div className="text-center max-w-sm">
         <p className="text-white font-semibold text-lg">{LOADING_STEPS[step]}</p>
         <p className="text-slate-500 text-sm mt-1">TAIGA · Framework Analysis</p>
-        <p className="text-slate-600 text-xs mt-2">This may take 3–6 minutes. Please keep this window open.</p>
+        <p className="text-slate-600 text-xs mt-2">This may take 10–15 minutes. Please keep this window open.</p>
         <div className="flex gap-2 justify-center mt-4">
           {LOADING_STEPS.map((_, i) => (
             <span key={i} className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
@@ -129,12 +127,7 @@ export default function IntakePage() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
 
-  const [form, setForm] = useState(IS_DEV ? DEV_DEFAULTS : {
-    companyName: "", systemName: "", systemDescription: "",
-    industry: "", geography: "", usStates: [],
-    aihcsResponse: "no",
-    deploymentStage: "production", dataTypes: [], additionalContext: "",
-  });
+  const [form, setForm] = useState(DEV_DEFAULTS);
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -187,19 +180,27 @@ export default function IntakePage() {
       const token = sessionStorage.getItem("token");
       const formData = new FormData();
 
+      const { companyName, systemName, systemDescription, industry, geography,
+               usStates, aihcsResponse, deploymentStage, dataTypes, additionalContext } = form;
+
       const payload = {
-        ...form,
-        usStates: form.usStates.join(","),
-        selectedFrameworks: "",  // handled by backend
-        // dataTypes: array → comma-separated string for the payload
-        dataTypes: form.dataTypes.join(", "),
+        companyName,
+        systemName,
+        systemDescription,
+        industry,
+        geography,
+        usStates: usStates.join(","),
+        aihcsResponse,
+        deploymentStage,
+        dataTypes: Array.isArray(dataTypes) ? dataTypes.join(", ") : dataTypes,
+        additionalContext,
       };
       Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
       if (file) formData.append("file", file);
 
       const stepTimer = setInterval(() => {
         setLoadingStep((s) => Math.min(s + 1, LOADING_STEPS.length - 2));
-      }, 45000);
+      }, 180000); // advance step every 3 min across ~15 min total
 
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/assess`, {
         method: "POST",
