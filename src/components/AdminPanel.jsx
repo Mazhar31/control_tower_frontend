@@ -1,0 +1,139 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import client from "../api/client";
+
+export default function AdminPanel() {
+  const { user, logout } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ name: "", email: "" });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  function showMessage(setter, msg) {
+    setter(msg);
+    setTimeout(() => setter(""), 3000);
+  }
+
+  async function fetchUsers() {
+    try {
+      const { data } = await client.get("/admin/users");
+      setUsers(data);
+    } catch {
+      showMessage(setError, "Failed to load users.");
+    }
+  }
+
+  function set(field) {
+    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  }
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    setError(""); setSuccess(""); setLoading(true);
+    try {
+      await client.post("/admin/users", form);
+      showMessage(setSuccess, `User created. Default password: Qwerty@123`);
+      setForm({ name: "", email: "" });
+      fetchUsers();
+    } catch (err) {
+      showMessage(setError, err.response?.data?.detail ?? "Failed to create user.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm("Delete this user?")) return;
+    try {
+      await client.delete(`/admin/users/${id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch {
+      showMessage(setError, "Failed to delete user.");
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+          <button onClick={logout} className="text-sm text-slate-400 hover:text-white transition-colors">
+            Sign Out
+          </button>
+        </div>
+
+        {/* Add User Form */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-4">Add New User</h2>
+          <form onSubmit={handleAdd} className="flex gap-3 flex-wrap">
+            <input
+              type="text"
+              placeholder="Full name"
+              value={form.name}
+              onChange={set("name")}
+              required
+              className="flex-1 min-w-[160px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            <input
+              type="email"
+              placeholder="Email address"
+              value={form.email}
+              onChange={set("email")}
+              required
+              className="flex-1 min-w-[200px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors cursor-pointer"
+            >
+              {loading ? "Adding…" : "Add User"}
+            </button>
+          </form>
+
+          {error && <p className="mt-3 text-red-400 text-sm">{error}</p>}
+          {success && <p className="mt-3 text-green-400 text-sm">{success}</p>}
+        </div>
+
+        {/* Users Table */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <h2 className="text-lg font-semibold px-6 py-4 border-b border-slate-800">Users</h2>
+          {users.length === 0 ? (
+            <p className="text-slate-500 text-sm px-6 py-6">No users yet.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 border-b border-slate-800">
+                  <th className="text-left px-6 py-3 font-medium">Name</th>
+                  <th className="text-left px-6 py-3 font-medium">Email</th>
+                  <th className="text-left px-6 py-3 font-medium">Joined</th>
+                  <th className="px-6 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
+                    <td className="px-6 py-3 text-white">{u.name}</td>
+                    <td className="px-6 py-3 text-slate-300">{u.email}</td>
+                    <td className="px-6 py-3 text-slate-400">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-3 text-right">
+                      <button
+                        onClick={() => handleDelete(u.id)}
+                        className="text-red-400 hover:text-red-300 text-xs transition-colors cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
