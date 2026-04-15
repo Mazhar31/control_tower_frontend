@@ -184,7 +184,7 @@ export default function IntakePage() {
     setLoadingStep(0);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const formData = new FormData();
 
       const payload = {
