@@ -201,7 +201,7 @@ export default function IntakePage() {
         setLoadingStep((s) => Math.min(s + 1, LOADING_STEPS.length - 2));
       }, 45000);
 
-      const res = await fetch("/api/assess", {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/assess`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

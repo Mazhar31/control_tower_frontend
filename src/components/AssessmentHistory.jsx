@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import client from "../api/client";
 
 const TIER_COLOR = {
   Critical: "text-red-400",
@@ -18,11 +19,7 @@ export default function AssessmentHistory() {
   useEffect(() => {
     async function load() {
       try {
-        const token = localStorage.getItem("token");
-        const res = await fetch("/api/assess/history", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        const { data } = await client.get("/assess/history");
         setHistory(data);
       } catch {
         setHistory([]);

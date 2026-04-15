@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { mockLeashResponse } from "../data/mockData";
+import client from "../api/client";
 import ComplianceGauge from "./ComplianceGauge";
 import AuditClockGauge from "./AuditClockGauge";
 import TrendGauge from "./TrendGauge";
@@ -43,12 +44,7 @@ export default function Dashboard() {
       // Otherwise fetch from backend
       if (id) {
         try {
-          const token = localStorage.getItem("token");
-          const res = await fetch(`/api/assess/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!res.ok) throw new Error("Not found");
-          const json = await res.json();
+          const { data: json } = await client.get(`/assess/${id}`);
           setData(json.result);
         } catch {
           if (IS_DEV) {
