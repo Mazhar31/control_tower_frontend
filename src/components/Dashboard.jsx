@@ -91,7 +91,11 @@ export default function Dashboard() {
   const totalGaps = gaps.length;
   const resolvedCount = resolvedIds.size;
   const baseScore = Object.values(coverage).length
-    ? Math.round(Object.values(coverage).map((v) => v.pct_compliant).reduce((a, b) => a + b, 0) / Object.values(coverage).length)
+    ? Math.round(
+        Object.values(coverage)
+          .filter((v) => typeof v.pct_compliant === "number")
+          .reduce((sum, v, _, arr) => sum + v.pct_compliant / arr.length, 0)
+      )
     : 0;
   const complianceScore = totalGaps > 0
     ? Math.min(100, Math.round(baseScore + (resolvedCount / totalGaps) * (100 - baseScore)))

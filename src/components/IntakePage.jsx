@@ -128,7 +128,7 @@ export default function IntakePage() {
   const fileRef = useRef(null);
 
   const [form, setForm] = useState(DEV_DEFAULTS);
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -147,15 +147,15 @@ export default function IntakePage() {
   }
 
   function handleFileChange(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    const ext = f.name.split(".").pop().toLowerCase();
-    if (!["pdf", "docx"].includes(ext)) {
-      setError("Only PDF and DOCX files are accepted.");
-      return;
-    }
-    setFile(f);
+    const selected = Array.from(e.target.files);
+    const invalid = selected.filter((f) => !["pdf", "docx"].includes(f.name.split(".").pop().toLowerCase()));
+    if (invalid.length) { setError("Only PDF and DOCX files are accepted."); return; }
+    setFiles((prev) => {
+      const existing = new Set(prev.map((f) => f.name));
+      return [...prev, ...selected.filter((f) => !existing.has(f.name))];
+    });
     setError("");
+    e.target.value = "";
   }
 
   async function handleSubmit(e) {
@@ -180,13 +180,17 @@ export default function IntakePage() {
       const token = sessionStorage.getItem("token");
       const formData = new FormData();
 
-      const { companyName, systemName, systemDescription, industry, geography,
+      const { companyName, systemName, systemDescription, aiType, decisionImpact,
+               existingDocs, industry, geography,
                usStates, aihcsResponse, deploymentStage, dataTypes, additionalContext } = form;
 
       const payload = {
         companyName,
         systemName,
         systemDescription,
+        aiType: aiType || "",
+        decisionImpact: decisionImpact || "",
+        existingDocs: Array.isArray(existingDocs) ? existingDocs.join(",") : "",
         industry,
         geography,
         usStates: usStates.join(","),
@@ -196,7 +200,7 @@ export default function IntakePage() {
         additionalContext,
       };
       Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
-      if (file) formData.append("file", file);
+      files.forEach((f) => formData.append("files", f));
 
       const stepTimer = setInterval(() => {
         setLoadingStep((s) => Math.min(s + 1, LOADING_STEPS.length - 2));
@@ -285,6 +289,32 @@ export default function IntakePage() {
                 placeholder="e.g. ML system that analyzes purchase data for 50,000 customers…"
                 value={form.systemDescription} onChange={set("systemDescription")}
               />
+
+              <SelectField
+                label="Primary AI Technology"
+                options={[
+                  { value: "llm_api_openai",     label: "Third-party LLM API — OpenAI (GPT-4, etc.)" },
+                  { value: "llm_api_claude",     label: "Third-party LLM API — Anthropic (Claude)" },
+                  { value: "llm_api_gemini",     label: "Third-party LLM API — Google (Gemini)" },
+                  { value: "llm_api_other",      label: "Third-party LLM API — Other provider" },
+                  { value: "llm_hosted",         label: "Self-hosted / Open-source LLM (Llama, Mistral, etc.)" },
+                  { value: "ml_classification",  label: "ML Classification / Prediction model" },
+                  { value: "ml_recommendation",  label: "Recommendation / Ranking system" },
+                  { value: "computer_vision",    label: "Computer Vision / Image analysis" },
+                  { value: "nlp_custom",         label: "Custom NLP / Text processing" },
+                  { value: "multiple",           label: "Multiple AI types combined" },
+                  { value: "other",              label: "Other / Not sure" },
+                ]}
+                placeholder="Select the primary AI type…"
+                value={form.aiType} onChange={set("aiType")}
+              />
+
+              <Textarea
+                label="What decisions does the AI influence?"
+                hint="Who is affected? Are decisions automated or human-reviewed?"
+                placeholder="e.g. The AI generates loan approval recommendations. Human underwriters review all recommendations and make the final credit decision."
+                value={form.decisionImpact} onChange={set("decisionImpact")}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <SelectField
                   label="Industry" required
@@ -310,6 +340,27 @@ export default function IntakePage() {
                 hint="Upcoming audits, compliance deadlines, recent audit findings, or special requirements."
                 placeholder="e.g. Preparing for HIPAA audit Q3 2026."
                 value={form.additionalContext} onChange={set("additionalContext")}
+              />
+            </div>
+
+            {/* Existing Documentation */}
+            <div className="bg-slate-900 rounded-2xl border border-slate-700/50 p-6">
+              <SectionLabel>Existing Documentation</SectionLabel>
+              <p className="text-slate-500 text-xs mb-3">Select all that apply, even if incomplete or informal.</p>
+              <CheckboxGrid
+                options={[
+                  { value: "system_overview",          label: "System Overview / Architecture" },
+                  { value: "privacy_policy",            label: "Privacy Policy" },
+                  { value: "security_policy",           label: "Security Policy / Documentation" },
+                  { value: "ai_governance_policy",      label: "AI Governance Policy" },
+                  { value: "risk_assessment",           label: "Risk Assessment" },
+                  { value: "data_processing_agreement", label: "Data Processing Agreement" },
+                  { value: "validation_testing",        label: "Validation / Testing Docs" },
+                  { value: "incident_response",         label: "Incident Response Plan" },
+                  { value: "none",                      label: "None of the above" },
+                ]}
+                selected={form.existingDocs}
+                onToggle={toggleArray("existingDocs")}
               />
             </div>
 
@@ -407,24 +458,22 @@ export default function IntakePage() {
                 onClick={() => fileRef.current?.click()}
                 className="border-2 border-dashed border-slate-700 hover:border-indigo-500/60 rounded-xl p-6 flex flex-col items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="text-2xl">{file ? "📄" : "📁"}</span>
-                {file ? (
-                  <div className="text-center">
-                    <p className="text-white text-sm font-medium">{file.name}</p>
-                    <p className="text-slate-500 text-xs">{(file.size / 1024).toFixed(1)} KB</p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <p className="text-slate-300 text-sm">Click to attach a file</p>
-                    <p className="text-slate-500 text-xs">PDF or DOCX · max 1 file</p>
-                  </div>
-                )}
-                <input ref={fileRef} type="file" accept=".pdf,.docx" className="hidden" onChange={handleFileChange} />
+                <span className="text-2xl">📁</span>
+                <div className="text-center">
+                  <p className="text-slate-300 text-sm">Click to attach files</p>
+                  <p className="text-slate-500 text-xs">PDF or DOCX · multiple allowed</p>
+                </div>
+                <input ref={fileRef} type="file" accept=".pdf,.docx" multiple className="hidden" onChange={handleFileChange} />
               </div>
-              {file && (
-                <button type="button" onClick={() => setFile(null)} className="text-slate-500 hover:text-slate-300 text-xs mt-2 cursor-pointer">
-                  Remove file
-                </button>
+              {files.length > 0 && (
+                <ul className="mt-3 flex flex-col gap-1">
+                  {files.map((f) => (
+                    <li key={f.name} className="flex items-center justify-between text-xs text-slate-300 bg-slate-800 rounded-lg px-3 py-1.5">
+                      <span>📄 {f.name} <span className="text-slate-500">({(f.size / 1024).toFixed(1)} KB)</span></span>
+                      <button type="button" onClick={() => setFiles((prev) => prev.filter((x) => x.name !== f.name))} className="text-slate-500 hover:text-red-400 ml-3 cursor-pointer">✕</button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 
