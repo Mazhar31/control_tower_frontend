@@ -136,16 +136,7 @@ export default function Dashboard() {
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-xs text-slate-400">Live</span>
           </div>
-          {data.report_url && (
-            <a
-              href={data.report_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors"
-            >
-              ⬇ Download Report
-            </a>
-          )}
+
           {user && (
             <>
               <span className="text-slate-400 text-xs">
@@ -198,11 +189,11 @@ export default function Dashboard() {
         {/* Summary strip */}
         <div className="grid grid-cols-5 divide-x divide-slate-700/50 border-b border-slate-700/50 shrink-0">
           {[
+            { label: "Critical",        value: openGaps.filter(g => g.severity === "Critical").length, color: "text-red-400"    },
             { label: "High Severity",   value: openGaps.filter(g => g.severity === "High").length,     color: "text-orange-400" },
             { label: "Medium Severity", value: openGaps.filter(g => g.severity === "Medium").length,   color: "text-yellow-400" },
             { label: "Low Severity",    value: openGaps.filter(g => g.severity === "Low").length,      color: "text-green-400"  },
             { label: "Total Open",      value: openGaps.length,                                        color: "text-slate-200"  },
-            { label: "Critical",        value: openGaps.filter(g => g.severity === "Critical").length, color: "text-red-400"    },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex flex-col items-center justify-center py-3 bg-slate-900/40">
               <p className={`text-2xl font-bold ${color}`}>{value ?? 0}</p>
