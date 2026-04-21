@@ -1,4 +1,11 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  US_STATES, DEV_DEFAULTS,
+  INDUSTRIES, DATA_TYPES, GEOGRAPHIES,
+} from "../data/mockData";
+import ClarificationPage from "./ClarificationPage";
 
 function TermsModal({ onClose }) {
   return (
@@ -13,17 +20,14 @@ function TermsModal({ onClose }) {
         </div>
         <div className="overflow-y-auto px-6 py-5 text-slate-300 text-xs leading-relaxed flex flex-col gap-4">
           <p className="text-yellow-400 font-semibold">IMPORTANT: READ CAREFULLY BEFORE PROCEEDING</p>
-
           <div>
             <p className="text-white font-semibold mb-1">1. Nature of the Service</p>
             <p>The complimentary gap assessment provided by TAIGA | HAIG GROUP is a high-level, automated analysis only. It is not exhaustive, not guaranteed to identify every gap (critical or otherwise), and is offered free of charge solely to demonstrate the capabilities of the TAIGA Control Tower platform. The assessment may miss material gaps that could be identified later during remediation or by independent review.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">2. No Warranty or Guarantee</p>
             <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. TAIGA | HAIG GROUP AND ITS MEMBERS, OFFICERS, AND AGENTS EXPRESSLY DISCLAIM ANY AND ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, COMPLETENESS, OR NON-INFRINGEMENT.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">3. Client Responsibility and Assumption of Risk</p>
             <p className="mb-1">You, the client, remain solely and exclusively responsible for:</p>
@@ -35,32 +39,26 @@ function TermsModal({ onClose }) {
             </ul>
             <p className="mt-1">You assume all risk associated with reliance on the gap assessment.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">4. Limitation of Liability</p>
             <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, TAIGA | HAIG GROUP'S TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THIS COMPLIMENTARY GAP ASSESSMENT SHALL NOT EXCEED ONE HUNDRED U.S. DOLLARS ($100.00), REGARDLESS OF THE LEGAL THEORY (CONTRACT, TORT, NEGLIGENCE, STRICT LIABILITY, OR OTHERWISE). IN NO EVENT SHALL TAIGA | HAIG GROUP BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES, INCLUDING LOST PROFITS, LOSS OF DATA, REGULATORY FINES, OR BUSINESS INTERRUPTION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">5. Indemnification</p>
             <p>You agree to indemnify, defend, and hold harmless TAIGA | HAIG GROUP, its members (including TAIGA LLC, Jesse Hart / HAIG, and Shelby Chollett), officers, employees, and agents from and against any and all claims, losses, damages, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to your use of the gap assessment, your AI systems, or your failure to achieve compliance.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">6. No Legal or Professional Advice</p>
             <p>Nothing in the gap assessment, dashboard, or any related communication constitutes legal, regulatory, audit, or professional advice. You must consult your own qualified legal and compliance professionals.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">7. Governing Law</p>
             <p>These Terms shall be governed exclusively by the laws of the State of Minnesota, without regard to conflict of laws principles. Any dispute shall be resolved exclusively in the state or federal courts located in Ramsey County, Minnesota.</p>
           </div>
-
           <div>
             <p className="text-white font-semibold mb-1">8. Entire Agreement</p>
             <p>These Terms constitute the entire agreement between you and TAIGA | HAIG GROUP regarding the complimentary gap assessment and supersede all prior understandings.</p>
           </div>
-
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-lg p-3">
             <p className="text-white font-semibold mb-1">Acceptance</p>
             <p className="mb-1">By clicking "I Accept" you confirm that:</p>
@@ -78,12 +76,6 @@ function TermsModal({ onClose }) {
     </div>
   );
 }
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import {
-  US_STATES, DEV_DEFAULTS,
-  INDUSTRIES, DATA_TYPES, GEOGRAPHIES,
-} from "../data/mockData";
 
 const LOADING_STEPS = [
   "Submitting intake…",
@@ -218,6 +210,7 @@ export default function IntakePage() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [showTerms, setShowTerms] = useState(false);
+  const [clarification, setClarification] = useState(null); // {sessionId, questions, round, meta}
 
   function set(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -306,7 +299,7 @@ export default function IntakePage() {
         setLoadingStep((s) => Math.min(s + 1, LOADING_STEPS.length - 2));
       }, 180000); // advance step every 3 min across ~15 min total
 
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/assess`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/assess/start`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -321,6 +314,13 @@ export default function IntakePage() {
 
       setLoadingStep(LOADING_STEPS.length - 1);
       const data = await res.json();
+
+      if (data.status === "questions") {
+        setLoading(false);
+        setClarification({ sessionId: data.session_id, questions: data.questions, round: data.round, meta: data._meta });
+        return;
+      }
+
       saveAssessment(data.result, data.assessment_id);
       await new Promise((r) => setTimeout(r, 600));
       navigate(`/dashboard/${data.assessment_id}`);
@@ -331,6 +331,23 @@ export default function IntakePage() {
   }
 
   const showUsStates = form.geography === "United States";
+
+  if (clarification) {
+    return (
+      <ClarificationPage
+        key={`${clarification.sessionId}-${clarification.round}`}
+        sessionId={clarification.sessionId}
+        questions={clarification.questions}
+        round={clarification.round}
+        meta={clarification.meta}
+        onComplete={(next) => {
+          if (next.type === "questions") {
+            setClarification({ sessionId: next.payload.session_id, questions: next.payload.questions, round: next.payload.round, meta: next.payload._meta });
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
