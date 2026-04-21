@@ -11,8 +11,6 @@ import GapTable from "./GapTable";
 import AihcsTab from "./AihcsTab";
 
 const IS_DEV = import.meta.env.DEV;
-const AUDIT_DAYS = 47;
-const AUDIT_DATE = "Jun 15, 2026";
 
 export default function Dashboard() {
   const { user, logout, assessment: ctxAssessment, assessmentId: ctxId } = useAuth();
@@ -111,6 +109,14 @@ export default function Dashboard() {
   const priorScore = typeof data.prior_score === "number" ? data.prior_score : null;
   const trend = priorScore !== null ? baseScore - priorScore : null;
 
+  const auditDateStr = data.next_audit_date ?? null;
+  const auditDaysRemaining = auditDateStr
+    ? Math.ceil((new Date(auditDateStr) - new Date()) / (1000 * 60 * 60 * 24))
+    : null;
+  const auditDateLabel = auditDateStr
+    ? new Date(auditDateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : null;
+
   const tabPct = activeTab !== "all" && activeTab !== "AIHCS"
     ? coverage[activeTab]?.pct_compliant ?? null
     : null;
@@ -176,7 +182,7 @@ export default function Dashboard() {
         {/* Three gauges */}
         <div className="grid grid-cols-3 divide-x divide-slate-700/50 border-b border-slate-700/50 shrink-0">
           <div className="flex flex-col items-center py-4 bg-slate-900/60">
-            <AuditClockGauge daysRemaining={AUDIT_DAYS} auditDate={AUDIT_DATE} />
+            <AuditClockGauge daysRemaining={auditDaysRemaining} auditDate={auditDateLabel} />
           </div>
           <div className="flex flex-col items-center py-4 bg-slate-900">
             <ComplianceGauge score={complianceScore} />

@@ -275,7 +275,7 @@ export default function IntakePage() {
                existingDocs, dataTypes, infrastructure, scaleEstimate,
                aihcsResponse, aihcsDetail, geography, usStates, industry,
                sectorRegs, additionalContext,
-               contactName, contactTitle, contactEmail } = form;
+               contactName, contactTitle, contactEmail, nextAuditDate } = form;
 
       const payload = {
         companyName,
@@ -297,6 +297,7 @@ export default function IntakePage() {
         contactName: contactName || "",
         contactTitle: contactTitle || "",
         contactEmail: contactEmail || "",
+        nextAuditDate: nextAuditDate || "",
       };
       Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
       files.forEach((f) => formData.append("files", f));
@@ -795,18 +796,19 @@ export default function IntakePage() {
                 <Input label="Job Title" placeholder="Chief Technology Officer" value={form.contactTitle} onChange={set("contactTitle")} />
               </div>
               <Input label="Email Address" required type="email" placeholder="jane@example.com" value={form.contactEmail} onChange={set("contactEmail")} />
+              <Input
+                label="Next Scheduled Audit Date"
+                hint="Optional — used to power the Audit Clock on your dashboard."
+                type="date"
+                value={form.nextAuditDate}
+                onChange={set("nextAuditDate")}
+              />
               <Textarea
                 label="Anything else we should know? (optional)"
                 hint="Specific concerns, compliance deadlines, recent audit findings, or context about your situation."
                 placeholder="e.g. We have a SOC 2 audit scheduled in 90 days and need to understand our AI-specific gaps before then. We recently expanded to EU users and aren’t sure what EU AI Act obligations apply."
                 value={form.additionalContext} onChange={set("additionalContext")}
               />
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-3 flex items-start gap-2">
-                <span className="text-yellow-400 text-sm shrink-0">⚠️</span>
-                <p className="text-yellow-200/80 text-xs leading-relaxed">
-                  <span className="font-semibold">Important:</span> This is a high-level automated gap assessment only. It may miss critical gaps. You are fully responsible for final validation and compliance. Click "I Accept" to proceed at your own risk.
-                </p>
-              </div>
               <button
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, agreed: !f.agreed }))}
@@ -818,7 +820,7 @@ export default function IntakePage() {
                   form.agreed ? "bg-indigo-600 border-indigo-600" : "border-slate-600"
                 }`}>{form.agreed && <span className="text-white text-[10px] font-bold">✓</span>}</div>
                 <span className="text-slate-300 text-xs leading-relaxed">
-                  I Accept — I have read and agree to the{" "}
+                  I accept the{" "}
                   <span
                     role="button"
                     tabIndex={0}
@@ -826,9 +828,8 @@ export default function IntakePage() {
                     onKeyDown={(e) => e.key === "Enter" && (e.stopPropagation(), setShowTerms(true))}
                     className="text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
                   >
-                    Disclaimer and Terms &amp; Conditions
+                    Terms and Conditions
                   </span>
-                  . I understand this assessment is confidential and I proceed at my own risk.
                 </span>
               </button>
             </div>

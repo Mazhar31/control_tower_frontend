@@ -130,6 +130,7 @@ export const DEV_DEFAULTS = {
   contactName: "",
   contactTitle: "",
   contactEmail: "",
+  nextAuditDate: "",
   agreed: false,
 };
 

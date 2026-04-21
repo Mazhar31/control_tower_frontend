@@ -2,15 +2,94 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import client from "../api/client";
 
+const RISK_COLOR = {
+  Critical: "text-red-400",
+  High: "text-orange-400",
+  Medium: "text-yellow-400",
+  Low: "text-green-400",
+};
+
+function UserAssessmentRow({ group }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-6 py-3 hover:bg-slate-800/40 transition-colors cursor-pointer"
+      >
+        <div className="flex items-center gap-3">
+          <span className={`text-slate-400 text-xs transition-transform duration-200 ${open ? "rotate-90" : ""}`}>▶</span>
+          <div className="text-left">
+            <p className="text-white text-sm font-medium">{group.user_name}</p>
+            <p className="text-slate-500 text-xs">{group.user_email}</p>
+          </div>
+        </div>
+        <span className="text-slate-500 text-xs">{group.items.length} assessment{group.items.length !== 1 ? "s" : ""}</span>
+      </button>
+      {open && (
+        <div className="border-t border-slate-800/60 bg-slate-950/40">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-slate-500 border-b border-slate-800/60">
+                <th className="text-left px-8 py-2 font-medium">Company / System</th>
+                <th className="text-left px-4 py-2 font-medium">Risk</th>
+                <th className="text-left px-4 py-2 font-medium">Date</th>
+                <th className="px-4 py-2 font-medium text-right">Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              {group.items.map((a) => (
+                <tr key={a.id} className="border-b border-slate-800/30 hover:bg-slate-800/20">
+                  <td className="px-8 py-2">
+                    <p className="text-slate-200 font-medium">{a.company_name}</p>
+                    <p className="text-slate-500">{a.system_name}</p>
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className={`font-semibold ${RISK_COLOR[a.risk_tier] ?? "text-slate-400"}`}>
+                      {a.risk_tier ?? "—"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-slate-400 whitespace-nowrap">
+                    {a.created_at ? new Date(a.created_at).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    {a.report_url ? (
+                      <div className="flex flex-col items-end gap-0.5">
+                        <a
+                          href={a.report_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                        >
+                          Download ↗
+                        </a>
+                        <span className="text-slate-600 text-[10px]">Expires in 24h</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600">No report</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const { user, logout } = useAuth();
   const [users, setUsers] = useState([]);
+  const [assessments, setAssessments] = useState([]);
   const [form, setForm] = useState({ name: "", email: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); fetchAssessments(); }, []);
 
   function showMessage(setter, msg) {
     setter(msg);
@@ -23,6 +102,15 @@ export default function AdminPanel() {
       setUsers(data);
     } catch {
       showMessage(setError, "Failed to load users.");
+    }
+  }
+
+  async function fetchAssessments() {
+    try {
+      const { data } = await client.get("/admin/assessments");
+      setAssessments(data);
+    } catch {
+      showMessage(setError, "Failed to load assessments.");
     }
   }
 
@@ -132,6 +220,29 @@ export default function AdminPanel() {
               </tbody>
             </table>
           )}
+        </div>
+
+        {/* Assessments Table */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mt-8">
+          <h2 className="text-lg font-semibold px-6 py-4 border-b border-slate-800">Assessment Reports</h2>
+          {assessments.length === 0 ? (
+            <p className="text-slate-500 text-sm px-6 py-6">No assessments yet.</p>
+          ) : (() => {
+            // Group by user email
+            const grouped = assessments.reduce((acc, a) => {
+              const key = a.user_email;
+              if (!acc[key]) acc[key] = { user_name: a.user_name, user_email: a.user_email, items: [] };
+              acc[key].items.push(a);
+              return acc;
+            }, {});
+            return (
+              <div className="divide-y divide-slate-800">
+                {Object.values(grouped).map((group) => (
+                  <UserAssessmentRow key={group.user_email} group={group} />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

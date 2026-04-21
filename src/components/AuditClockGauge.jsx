@@ -20,6 +20,18 @@ function getStatus(days) {
 }
 
 export default function AuditClockGauge({ daysRemaining, auditDate }) {
+  if (daysRemaining === null || daysRemaining === undefined) {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <svg width="220" height="115" viewBox="0 0 220 115">
+          <path d={arc(0, 180)} fill="none" stroke="#1e293b" strokeWidth="20" strokeLinecap="butt" />
+        </svg>
+        <p className="text-slate-400 text-[10px] tracking-widest uppercase">Audit Clock</p>
+        <p className="text-2xl font-bold text-slate-600">—</p>
+        <p className="text-slate-600 text-xs">No audit date set</p>
+      </div>
+    );
+  }
   const clamped = Math.max(0, Math.min(daysRemaining, MAX_DAYS));
   const { color, label } = getStatus(daysRemaining);
   const angle = (clamped / MAX_DAYS) * 180;
