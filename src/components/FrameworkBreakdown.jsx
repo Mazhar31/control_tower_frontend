@@ -12,20 +12,20 @@ export default function FrameworkBreakdown({ frameworksTriggered, frameworkCover
     return "bg-green-500";
   }
 
-  function tabClass(active) {
-    return `flex items-center gap-2 px-4 py-2.5 rounded-t-xl border-t border-l border-r text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+  function pillClass(active) {
+    return `flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
       active
-        ? "bg-slate-800 border-slate-600 text-white -mb-px pb-3"
-        : "bg-slate-900/40 border-slate-700/40 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+        ? "bg-slate-700 border-slate-500 text-white"
+        : "bg-slate-900/40 border-slate-700/40 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 hover:border-slate-600"
     }`;
   }
 
   const showAihcs = frameworksTriggered.includes("AIHCS");
 
   return (
-    <div className="px-4 pt-3 pb-0 border-b border-slate-700/50 shrink-0">
-      <div className="flex items-end gap-2 overflow-x-auto pb-0 scrollbar-hide">
-        <button onClick={() => onTabChange("all")} className={tabClass(activeTab === "all")}>
+    <div className="px-4 py-2.5 border-b border-slate-700/50 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
+        <button onClick={() => onTabChange("all")} className={pillClass(activeTab === "all")}>
           <span className="w-2 h-2 rounded-full bg-indigo-500" />
           All Frameworks
         </button>
@@ -33,7 +33,7 @@ export default function FrameworkBreakdown({ frameworksTriggered, frameworkCover
         {frameworksTriggered.filter((fw) => fw !== "AIHCS").map((fw) => {
           const p = pct(fw);
           return (
-            <button key={fw} onClick={() => onTabChange(fw)} className={tabClass(activeTab === fw)}>
+            <button key={fw} onClick={() => onTabChange(fw)} className={pillClass(activeTab === fw)}>
               <span className={`w-2 h-2 rounded-full ${dotColor(p)}`} />
               {fw}
               {p !== null && (
@@ -50,7 +50,7 @@ export default function FrameworkBreakdown({ frameworksTriggered, frameworkCover
         })}
 
         {showAihcs && (
-          <button onClick={() => onTabChange("AIHCS")} className={tabClass(activeTab === "AIHCS")}>
+          <button onClick={() => onTabChange("AIHCS")} className={pillClass(activeTab === "AIHCS")}>
             <span className="w-2 h-2 rounded-full bg-purple-500" />
             AIHCS
           </button>

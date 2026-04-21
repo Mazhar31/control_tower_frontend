@@ -107,9 +107,9 @@ export default function Dashboard() {
     ? []
     : gaps.filter((g) => g.framework_map && activeTab in g.framework_map);
 
-  // Trend: compare with prior assessment score if available
-  const priorScore = null; // placeholder — extend when history comparison is needed
-  const trend = priorScore !== null ? complianceScore - priorScore : null;
+  // Trend: compare raw score of this assessment vs prior — not session-adjusted score
+  const priorScore = typeof data.prior_score === "number" ? data.prior_score : null;
+  const trend = priorScore !== null ? baseScore - priorScore : null;
 
   const tabPct = activeTab !== "all" && activeTab !== "AIHCS"
     ? coverage[activeTab]?.pct_compliant ?? null
@@ -229,7 +229,7 @@ export default function Dashboard() {
               </span>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {activeTab === "AIHCS" ? (
               <AihcsTab controls={data.shelby_controls} />
             ) : (

@@ -32,15 +32,15 @@ export const DATA_TYPES = [
 ];
 
 export const GEOGRAPHIES = [
-  { value: "United States", label: "United States" },
-  { value: "European Union", label: "European Union" },
-  { value: "United Kingdom", label: "United Kingdom" },
-  { value: "Canada", label: "Canada" },
-  { value: "Australia / New Zealand", label: "Australia / New Zealand" },
-  { value: "Asia-Pacific", label: "Asia-Pacific" },
-  { value: "Latin America", label: "Latin America" },
-  { value: "Middle East / Africa", label: "Middle East / Africa" },
-  { value: "Global / Worldwide", label: "Global / Worldwide" },
+  { value: "united_states",     label: "United States" },
+  { value: "european_union",    label: "European Union" },
+  { value: "united_kingdom",    label: "United Kingdom" },
+  { value: "canada",            label: "Canada" },
+  { value: "australia",         label: "Australia / New Zealand" },
+  { value: "asia_pacific",      label: "Asia-Pacific" },
+  { value: "latin_america",     label: "Latin America" },
+  { value: "middle_east_africa",label: "Middle East / Africa" },
+  { value: "global",            label: "Global / Worldwide" },
 ];
 
 export const FRAMEWORKS = [
@@ -87,20 +87,50 @@ export const US_STATES = [
   { code: "WI", name: "Wisconsin" }, { code: "WY", name: "Wyoming" },
 ];
 
+export const SECTOR_REGS = [
+  { value: "hipaa",       label: "HIPAA (US healthcare)" },
+  { value: "21cfr11",     label: "21 CFR Part 11 (FDA regulated)" },
+  { value: "pci_dss",     label: "PCI DSS (payment cards)" },
+  { value: "sox",         label: "SOX (public company)" },
+  { value: "fedramp",     label: "FedRAMP / FISMA (government)" },
+  { value: "dora",        label: "DORA (EU financial)" },
+  { value: "gxp",         label: "GxP / GCP (clinical trials)" },
+  { value: "none_sector", label: "None of the above" },
+];
+
+export const SCALE_OPTIONS = [
+  { value: "internal_only", label: "Internal use only (employees)" },
+  { value: "lt_1k",         label: "Fewer than 1,000 users" },
+  { value: "1k_10k",        label: "1,000 – 10,000 users" },
+  { value: "10k_100k",      label: "10,000 – 100,000 users" },
+  { value: "100k_1m",       label: "100,000 – 1 million users" },
+  { value: "gt_1m",         label: "Over 1 million users" },
+  { value: "unknown",       label: "Unknown / Not tracked" },
+];
+
 export const DEV_DEFAULTS = {
-  companyName: "Test Company",
-  systemName: "Customer Analytics AI",
-  systemDescription: "ML system analyzing purchase data for 50,000 customers in US and EU.",
-  aiType: "ml_classification",
-  decisionImpact: "Generates product recommendations reviewed by marketing team before campaigns.",
-  existingDocs: ["privacy_policy", "security_policy"],
-  industry: "Technology",
-  geography: "United States",
-  usStates: ["CA", "CO"],
-  aihcsResponse: "no",
-  deploymentStage: "production",
-  dataTypes: ["PII", "Behavioral data"],
+  companyName: "",
+  systemName: "",
+  systemDescription: "",
+  aiType: "",
+  decisionImpact: "",
+  existingDocs: [],
+  dataTypes: [],
+  infrastructure: "",
+  deploymentStage: "",
+  scaleEstimate: "",
+  aihcsResponse: "",
+  aihcsDetail: "",
+  geography: [],
+  usStates: [],
+  industry: "",
+  sectorRegs: [],
+  selectedFrameworks: [],
   additionalContext: "",
+  contactName: "",
+  contactTitle: "",
+  contactEmail: "",
+  agreed: false,
 };
 
 export const mockLeashResponse = {

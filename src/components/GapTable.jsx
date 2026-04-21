@@ -26,10 +26,10 @@ export default function GapTable({ gaps, activeFramework, resolvedIds = new Set(
   const ordered = [...unresolved, ...resolved];
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-700/60">
+    <div className="h-full overflow-auto rounded-xl border border-slate-700/60">
       <table className="w-full text-sm text-left">
-        <thead>
-          <tr className="border-b border-slate-700/60 text-slate-400 uppercase text-[10px] tracking-wider bg-slate-800/40">
+        <thead className="sticky top-0 z-10">
+          <tr className="border-b border-slate-700/60 text-slate-400 uppercase text-[10px] tracking-wider bg-slate-800">
             <th className="px-3 py-2 font-medium whitespace-nowrap">Gap ID</th>
             <th className="px-3 py-2 font-medium">Title</th>
             <th className="px-3 py-2 font-medium whitespace-nowrap">Severity</th>
